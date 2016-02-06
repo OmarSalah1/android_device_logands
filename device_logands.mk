@@ -34,10 +34,6 @@ PRODUCT_COPY_FILES += \
 	device/samsung/logands/keylayouts/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
 	device/samsung/logands/keylayouts/samsung-keypad.kl:system/usr/keylayout/samsung-keypad.kl
 
-# Copy Apps
-#PRODUCT_COPY_FILES += \
-#   device/samsung/baffinlite/MultiSIM-Toggle.apk:system/app/MultiSIM-Toggle.apk
-
 # Charger
 PRODUCT_PACKAGES += \
 	charger_res_images
@@ -128,7 +124,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 	mobiledata.interfaces=rmnet0 \
 	ro.telephony.ril_class=SamsungBCMRIL \
 	persist.radio.multisim.config=dsds \
-	cm.updater.uri=http://ota.androiddev.pp.ua \
+	cm.updater.uri=http://updates.cm-ota.pp.ua \
 	ro.telephony.call_ring.multiple=0 \
 	camera2.portability.force_api=1 \
 	ro.telephony.call_ring=0
@@ -163,6 +159,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 # Dalvik heap config
 include frameworks/native/build/phone-hdpi-512-dalvik-heap.mk
+include frameworks/native/build/phone-xxhdpi-2048-hwui-memory.mk
 
 $(call inherit-product, hardware/broadcom/wlan/bcmdhd/config/config-bcm.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
