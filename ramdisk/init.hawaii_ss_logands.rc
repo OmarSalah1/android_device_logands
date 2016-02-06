@@ -499,13 +499,13 @@ on post-fs
     chmod 0771 /efs
 
 # Create filesystem if necessary
-    service setup_fs /system/bin/setup_fs \
-                /dev/block/mmcblk0p15 \
-                /dev/block/mmcblk0p11
-        class core
-        user root
-        group root
-        oneshot
+#    service setup_fs /system/bin/setup_fs \
+#                /dev/block/mmcblk0p15 \
+#                /dev/block/mmcblk0p11
+#        class core
+#        user root
+#        group root
+#        oneshot
 
 #bosch sensor deamon
 	service sensord /system/bin/sensord
@@ -626,10 +626,10 @@ on property:init.svc.macloader=stopped
 		group radio system log root
 
 # Run usb_portd to automatically launch atx when USB configuration changes.
-service usb_portd /system/bin/usb_portd
-    class main
-    user system
-    group input vpn net_admin net_raw radio system sdcard_rw log mount
+    service usb_portd /system/bin/usb_portd
+        class main
+        user system
+        group input vpn net_admin net_raw radio system sdcard_rw log mount
 
 #Indicate boot complete to PM to complete PM initialization
 on property:dev.bootcomplete=1
