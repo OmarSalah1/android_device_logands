@@ -777,6 +777,7 @@ status_t ACodec::handleSetSurface(const sp<Surface> &surface) {
 }
 
 status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+	ALOGE("ACodec:PATCH:allocateBuffersOnPort portIndex(%i)", portIndex);
     CHECK(portIndex == kPortIndexInput || portIndex == kPortIndexOutput);
 
     CHECK(mDealer[portIndex] == NULL);
@@ -785,6 +786,7 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
     status_t err;
     if (mNativeWindow != NULL && portIndex == kPortIndexOutput) {
         //if (storingMetadataInDecodedBuffers()) {
+			ALOGE("ACodec:PATCH:allocateBuffersOnPort portIndex(%i) -> allocateOutputBuffersFromNativeWindow()", portIndex);
         //    err = allocateOutputMetadataBuffers();
         //} else {
             err = allocateOutputBuffersFromNativeWindow();
@@ -892,14 +894,17 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
 
 status_t ACodec::setupNativeWindowSizeFormatAndUsage(
         ANativeWindow *nativeWindow /* nonnull */, int *finalUsage /* nonnull */) {
+	ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s]", mComponentName.c_str());		
     OMX_PARAM_PORTDEFINITIONTYPE def;
     InitOMXParams(&def);
     def.nPortIndex = kPortIndexOutput;
+	ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] def.nPortIndex = %i", mComponentName.c_str(), def.nPortIndex);	
 
     status_t err = mOMX->getParameter(
             mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
 
     if (err != OK) {
+		ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] getParameter(OMX_IndexParamPortDefinition) ERROR", mComponentName.c_str());	
         return err;
     }
 
@@ -923,6 +928,18 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
     OMX_COLOR_FORMATTYPE eNativeColorFormat = def.format.video.eColorFormat;
     setNativeWindowColorFormat(eNativeColorFormat);
 #endif
+
+	ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] def.format.video.eColorFormat(%i)", mComponentName.c_str(), def.format.video.eColorFormat);
+	switch (def.format.video.eColorFormat) {
+		default:
+			def.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
+			status_t cl = mOMX->setParameter(mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
+			ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] def.format.video.eColorFormat NOW (%i)", mComponentName.c_str(), def.format.video.eColorFormat);
+			if (cl != OK) {
+				ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] setParameter(OMX_IndexParamPortDefinition) ERROR", mComponentName.c_str());
+			}
+		break;	
+	}
 
     ALOGV("gralloc usage: %#x(OMX) => %#x(ACodec)", omxUsage, usage);
     err = setNativeWindowSizeFormatAndUsage(
@@ -960,7 +977,8 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
 
 status_t ACodec::configureOutputBuffersFromNativeWindow(
         OMX_U32 *bufferCount, OMX_U32 *bufferSize,
-        OMX_U32 *minUndequeuedBuffers) {
+        OMX_U32 *minUndequeuedBuffers) {	
+	ALOGE("ACodec:PATCH:configureOutputBuffersFromNativeWindow[%s]", mComponentName.c_str());	
     OMX_PARAM_PORTDEFINITIONTYPE def;
     InitOMXParams(&def);
     def.nPortIndex = kPortIndexOutput;
@@ -972,6 +990,7 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
         err = setupNativeWindowSizeFormatAndUsage(mNativeWindow.get(), &mNativeWindowUsageBits);
     }
     if (err != OK) {
+		ALOGE("ACodec:PATCH:configureOutputBuffersFromNativeWindow[%s] getParameter(OMX_IndexParamPortDefinition) ERROR", mComponentName.c_str());
         mNativeWindowUsageBits = 0;
         return err;
     }
@@ -1694,8 +1713,10 @@ status_t ACodec::setComponentRole(
 
 status_t ACodec::configureCodec(
         const char *mime, const sp<AMessage> &msg) {
+	ALOGE("ACodec:PATCH:configureCodec[%s]", mComponentName.c_str());		
     int32_t encoder;
     if (!msg->findInt32("encoder", &encoder)) {
+		ALOGE("ACodec:PATCH:configureCodec[%s] not encoder", mComponentName.c_str());
         encoder = false;
     }
 
@@ -1710,6 +1731,7 @@ status_t ACodec::configureCodec(
     status_t err = setComponentRole(encoder /* isEncoder */, mime);
 
     if (err != OK) {
+		ALOGE("ACodec:PATCH:configureCodec[%s] setComponentRole ERROR", mComponentName.c_str());
         return err;
     }
 
@@ -1794,24 +1816,29 @@ status_t ACodec::configureCodec(
         if (!msg->findInt64(
                     "repeat-previous-frame-after",
                     &mRepeatFrameDelayUs)) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] repeat-previous-frame-after ERROR", mComponentName.c_str());			
             mRepeatFrameDelayUs = -1ll;
         }
 
         if (!msg->findInt64("max-pts-gap-to-encoder", &mMaxPtsGapUs)) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] max-pts-gap-to-encoder ERROR", mComponentName.c_str());	
             mMaxPtsGapUs = -1ll;
         }
 
         if (!msg->findFloat("max-fps-to-encoder", &mMaxFps)) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] max-fps-to-encoder ERROR", mComponentName.c_str());
             mMaxFps = -1;
         }
 
         if (!msg->findInt64("time-lapse", &mTimePerCaptureUs)) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] time-lapse ERROR", mComponentName.c_str());
             mTimePerCaptureUs = -1ll;
         }
 
         if (!msg->findInt32(
                     "create-input-buffers-suspended",
                     (int32_t*)&mCreateInputBuffersSuspended)) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] create-input-buffers-suspended false", mComponentName.c_str());			
             mCreateInputBuffersSuspended = false;
         }
     }
@@ -3736,6 +3763,7 @@ status_t ACodec::setupVPXEncoderParameters(const sp<AMessage> &msg) {
 
 status_t ACodec::verifySupportForProfileAndLevel(
         int32_t profile, int32_t level) {
+	ALOGE("ACodec:PATCH:verifySupportForProfileAndLevel[%s] profile[%i] level[%i]", mComponentName.c_str(), profile, level);		
     OMX_VIDEO_PARAM_PROFILELEVELTYPE params;
     InitOMXParams(&params);
     params.nPortIndex = kPortIndexOutput;
@@ -3748,6 +3776,7 @@ status_t ACodec::verifySupportForProfileAndLevel(
                 sizeof(params));
 
         if (err != OK) {
+			ALOGE("ACodec:PATCH:verifySupportForProfileAndLevel[%s] getParameter(OMX_IndexParamVideoProfileLevelQuerySupported) ERROR", mComponentName.c_str());
             return err;
         }
 
@@ -3946,7 +3975,7 @@ bool ACodec::describeDefaultColorFormat(DescribeColorFormatParams &params) {
 
     image.mType = MediaImage::MEDIA_IMAGE_TYPE_UNKNOWN;
     image.mNumPlanes = 0;
-	
+
     const OMX_COLOR_FORMATTYPE fmt = params.eColorFormat;
     image.mWidth = params.nFrameWidth;
     image.mHeight = params.nFrameHeight;
@@ -3957,6 +3986,7 @@ bool ACodec::describeDefaultColorFormat(DescribeColorFormatParams &params) {
         fmt != OMX_COLOR_FormatYUV420SemiPlanar &&
         fmt != OMX_COLOR_FormatYUV420PackedSemiPlanar &&
         fmt != OMX_TI_COLOR_FormatYUV420PackedSemiPlanar &&
+		fmt != OMX_COLOR_FormatYCbYCr &&
         fmt != HAL_PIXEL_FORMAT_YV12) {
         ALOGW("do not know color format 0x%x = %d", fmt, fmt);
         return false;
@@ -4011,6 +4041,7 @@ bool ACodec::describeDefaultColorFormat(DescribeColorFormatParams &params) {
             }
 
         case OMX_COLOR_FormatYUV420Planar:
+		case OMX_COLOR_FormatYCbYCr:
         case OMX_COLOR_FormatYUV420PackedPlanar:
             image.mPlane[image.U].mOffset = params.nStride * params.nSliceHeight;
             image.mPlane[image.U].mColInc = 1;

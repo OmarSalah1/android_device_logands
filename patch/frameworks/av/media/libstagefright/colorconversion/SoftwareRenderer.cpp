@@ -274,8 +274,8 @@ std::list<FrameRenderTracker::Info> SoftwareRenderer::render(
         }
 
         for (int y = 0; y < (mCropHeight + 1) / 2; ++y) {
-			memcpy(dst_u, src_v, (mCropWidth + 1) / 2);
-            memcpy(dst_v, src_u, (mCropWidth + 1) / 2);
+            memcpy(dst_u, src_u, (mCropWidth + 1) / 2);
+            memcpy(dst_v, src_v, (mCropWidth + 1) / 2);
 
             src_u += mWidth / 2;
             src_v += mWidth / 2;

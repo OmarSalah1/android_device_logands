@@ -1336,8 +1336,13 @@ status_t OMXCodec::setVideoOutputFormat(
                 &format, sizeof(format));
         CHECK_EQ(err, (status_t)OK);
         CHECK_EQ((int)format.eCompressionFormat, (int)OMX_VIDEO_CodingUnused);
+
+        int32_t colorFormat;
 		
-		int32_t colorFormat;
+		if (!strncmp("OMX.brcm.video.h264.hw.decoder", mComponentName, 30)) {
+			ALOGE("PATCH:OMXCodec:setVideoOutputFormat[%s] colorFormat BRCM set 19", mComponentName);	
+			format.eColorFormat = OMX_COLOR_FormatYUV420Planar;
+		}
 		
         if (meta->findInt32(kKeyColorFormat, &colorFormat)
                 && colorFormat != OMX_COLOR_FormatUnused
@@ -1351,6 +1356,10 @@ status_t OMXCodec::setVideoOutputFormat(
                 if (format.eColorFormat == colorFormat) {
                     break;
                 }
+				if((unsigned int)err == 0x80001005){
+					ALOGE("PATCH:OMXCodec:setVideoOutputFormat[%s] getParameter(OMX_IndexParamVideoPortFormat) colorFormat(%i) != format.eColorFormat (%i) OMX_ErrorNoMore", mComponentName, colorFormat, format.eColorFormat);
+					err = OMX_ErrorNoMore;
+				}
             }
             if (format.eColorFormat != colorFormat) {
                 CODEC_LOGE("Color format %d is not supported", colorFormat);
@@ -4526,7 +4535,6 @@ status_t QueryCodec(
                 }
             }
             //caps->mColorFormats.push(portFormat.eColorFormat);
-			//caps->mColorFormats.push(portFormat.eColorFormat);
 			if(portFormat.eColorFormat == OMX_COLOR_FormatYCbYCr) {
 				ALOGE("PATCH:OMXCodec:QueryCodec:getParameter(IndexParamVideoPortFormat) portFormat.eColorFormat %i SET %i", portFormat.eColorFormat, OMX_COLOR_FormatYUV420Planar);
 				caps->mColorFormats.push(OMX_COLOR_FormatYUV420Planar);
