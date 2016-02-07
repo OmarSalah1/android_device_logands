@@ -121,7 +121,6 @@ COMMON_GLOBAL_CFLAGS += -DDISABLE_ASHMEM_TRACKING
 # Recovery
 #TARGET_RECOVERY_INITRC := 
 TARGET_RECOVERY_FSTAB := device/samsung/logands/ramdisk/fstab.hawaii_ss_logands
-TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/class/android_usb/android0/f_mass_storage/lun%d/file"
 BOARD_HAS_NO_SELECT_BUTTON := true
 BOARD_HAS_LARGE_FILESYSTEM := true
 TARGET_USERIMAGES_USE_EXT4 := true
@@ -132,6 +131,12 @@ BOARD_USES_MMCUTILS := false
 BOARD_RECOVERY_ALWAYS_WIPES := false
 BOARD_SUPPRESS_EMMC_WIPE := true
 TARGET_RECOVERY_DENSITY := hdpi
+
+# Vold
+BOARD_UMS_LUNFILE                  := /sys/class/android_usb/f_mass_storage/lun/file
+TARGET_USE_CUSTOM_LUN_FILE_PATH    := /sys/class/android_usb/android0/f_mass_storage/lun/file
+BOARD_VOLD_EMMC_SHARES_DEV_MAJOR   := true
+BOARD_VOLD_MAX_PARTITIONS          := 19
 
 # CMHW
 BOARD_HARDWARE_CLASS := hardware/samsung/cmhw/ device/samsung/logands/cmhw/
