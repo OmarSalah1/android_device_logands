@@ -792,14 +792,18 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
             err = allocateOutputBuffersFromNativeWindow();
         //}
     } else {
+		ALOGE("ACodec:PATCH:allocateBuffersOnPort ELSE (%i)", portIndex);
         OMX_PARAM_PORTDEFINITIONTYPE def;
         InitOMXParams(&def);
         def.nPortIndex = portIndex;
-
+		
+		ALOGE("ACodec:PATCH:allocateBuffersOnPort ELSE def.nPortIndex(%i) portIndex(%i)", def.nPortIndex, portIndex);
+		ALOGE("ACodec:PATCH:allocateBuffersOnPort getParameter(OMX_IndexParamPortDefinition) (%i) (%i)", def.nPortIndex, portIndex);
         err = mOMX->getParameter(
                 mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
 
         if (err == OK) {
+			ALOGE("ACodec:PATCH:allocateBuffersOnPort getParameter(OMX_IndexParamPortDefinition) OK (%i) (%i)", def.nPortIndex, portIndex);
             MetadataBufferType type =
                 portIndex == kPortIndexOutput ? mOutputMetadataType : mInputMetadataType;
             int32_t bufSize = def.nBufferSize;
@@ -867,9 +871,11 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
                 mBuffers[portIndex].push(info);
             }
         }
+		ALOGE("ACodec:PATCH:allocateBuffersOnPort getParameter(OMX_IndexParamPortDefinition) ERROR? (%i) (%i)", def.nPortIndex, portIndex);
     }
 
     if (err != OK) {
+		ALOGE("ACodec:PATCH:allocateBuffersOnPort ERROR (%i)", portIndex);
         return err;
     }
 
@@ -877,6 +883,7 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
     notify->setInt32("what", CodecBase::kWhatBuffersAllocated);
 
     notify->setInt32("portIndex", portIndex);
+	ALOGE("ACodec:PATCH:allocateBuffersOnPort setInt32(portIndex)(%i)", portIndex);
 
     sp<PortDescription> desc = new PortDescription;
 
@@ -1748,6 +1755,7 @@ status_t ACodec::configureCodec(
     if (encoder
             && msg->findInt32("store-metadata-in-buffers", &storeMeta)
             && storeMeta != 0) {
+		ALOGE("ACodec:PATCH:configureCodec[%s] storeMetaDataInBuffers", mComponentName.c_str());		
         err = mOMX->storeMetaDataInBuffers(mNode, kPortIndexInput, OMX_TRUE, &mInputMetadataType);
         if (err != OK) {
             ALOGE("[%s] storeMetaDataInBuffers (input) failed w/ err %d",
@@ -1758,16 +1766,19 @@ status_t ACodec::configureCodec(
         // For this specific case we could be using camera source even if storeMetaDataInBuffers
         // returns Gralloc source. Pretend that we are; this will force us to use nBufferSize.
         if (mInputMetadataType == kMetadataBufferTypeGrallocSource) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] mInputMetadataType == kMetadataBufferTypeGrallocSource", mComponentName.c_str());
             mInputMetadataType = kMetadataBufferTypeCameraSource;
         }
 
-        uint32_t usageBits;
-        if (mOMX->getParameter(
-                mNode, (OMX_INDEXTYPE)OMX_IndexParamConsumerUsageBits,
-                &usageBits, sizeof(usageBits)) == OK) {
-            inputFormat->setInt32(
-                    "using-sw-read-often", !!(usageBits & GRALLOC_USAGE_SW_READ_OFTEN));
-        }
+        //uint32_t usageBits;
+		ALOGE("ACodec:PATCH:configureCodec[%s] BEGIN using-sw-read-often", mComponentName.c_str());
+        //if (mOMX->getParameter(
+        //        mNode, (OMX_INDEXTYPE)OMX_IndexParamConsumerUsageBits,
+        //        &usageBits, sizeof(usageBits)) == OK) {
+		//	ALOGE("ACodec:PATCH:configureCodec[%s] using-sw-read-often", mComponentName.c_str());		
+        //    inputFormat->setInt32(
+        //            "using-sw-read-often", !!(usageBits & GRALLOC_USAGE_SW_READ_OFTEN));
+        //}
     }
 
     int32_t prependSPSPPS = 0;
@@ -1775,6 +1786,7 @@ status_t ACodec::configureCodec(
             && msg->findInt32("prepend-sps-pps-to-idr-frames", &prependSPSPPS)
             && prependSPSPPS != 0) {
         OMX_INDEXTYPE index;
+		ALOGE("ACodec:PATCH:configureCodec[%s] getExtensionIndex OMX.google.android.index.prependSPSPPSToIDRFrames", mComponentName.c_str());
         err = mOMX->getExtensionIndex(
                 mNode,
                 "OMX.google.android.index.prependSPSPPSToIDRFrames",
@@ -1806,7 +1818,7 @@ status_t ACodec::configureCodec(
         OMX_BOOL enable = (OMX_BOOL) (prependSPSPPS
             && msg->findInt32("store-metadata-in-buffers-output", &storeMeta)
             && storeMeta != 0);
-
+        ALOGE("ACodec:PATCH:configureCodec[%s] storeMetaDataInBuffers 2", mComponentName.c_str());
         err = mOMX->storeMetaDataInBuffers(mNode, kPortIndexOutput, enable, &mOutputMetadataType);
         if (err != OK) {
             ALOGE("[%s] storeMetaDataInBuffers (output) failed w/ err %d",
@@ -1842,7 +1854,7 @@ status_t ACodec::configureCodec(
             mCreateInputBuffersSuspended = false;
         }
     }
-
+	ALOGE("ACodec:PATCH:configureCodec[%s] 2", mComponentName.c_str());
     // NOTE: we only use native window for video decoders
     sp<RefBase> obj;
     bool haveNativeWindow = msg->findObject("native-window", &obj)
@@ -1864,7 +1876,7 @@ status_t ACodec::configureCodec(
     if (haveNativeWindow) {
         sp<ANativeWindow> nativeWindow =
             static_cast<ANativeWindow *>(static_cast<Surface *>(obj.get()));
-
+		ALOGE("ACodec:PATCH:configureCodec[%s] 3", mComponentName.c_str());
         // START of temporary support for automatic FRC - THIS WILL BE REMOVED
         int32_t autoFrc;
         if (msg->findInt32("auto-frc", &autoFrc)) {
@@ -1882,13 +1894,13 @@ status_t ACodec::configureCodec(
             }
         }
         // END of temporary support for automatic FRC
-
+		ALOGE("ACodec:PATCH:configureCodec[%s] 4", mComponentName.c_str());
         int32_t tunneled;
         if (msg->findInt32("feature-tunneled-playback", &tunneled) &&
             tunneled != 0) {
             ALOGI("Configuring TUNNELED video playback.");
             mTunneled = true;
-
+			ALOGE("ACodec:PATCH:configureCodec[%s] 5", mComponentName.c_str());
             int32_t audioHwSync = 0;
             if (!msg->findInt32("audio-hw-sync", &audioHwSync)) {
                 ALOGW("No Audio HW Sync provided for video tunnel");
@@ -1912,12 +1924,14 @@ status_t ACodec::configureCodec(
                     // allow failure
                     err = OK;
                 } else {
+					ALOGE("ACodec:PATCH:configureCodec[%s] 6", mComponentName.c_str());
                     inputFormat->setInt32("max-width", maxWidth);
                     inputFormat->setInt32("max-height", maxHeight);
                     inputFormat->setInt32("adaptive-playback", true);
                 }
             }
         } else {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 7", mComponentName.c_str());
             ALOGV("Configuring CPU controlled video playback.");
             mTunneled = false;
 
@@ -1931,6 +1945,7 @@ status_t ACodec::configureCodec(
             }
 
             // Always try to enable dynamic output buffers on native surface
+			ALOGE("ACodec:PATCH:configureCodec[%s] 8", mComponentName.c_str());
             err = mOMX->storeMetaDataInBuffers(
                     mNode, kPortIndexOutput, OMX_TRUE, &mOutputMetadataType);
             if (err != OK) {
@@ -1980,8 +1995,10 @@ status_t ACodec::configureCodec(
                     }
                 }
                 // allow failure
+				ALOGE("ACodec:PATCH:configureCodec[%s] 9", mComponentName.c_str());
                 err = OK;
             } else {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 10", mComponentName.c_str());	
                 ALOGV("[%s] storeMetaDataInBuffers succeeded",
                         mComponentName.c_str());
                 CHECK(storingMetadataInDecodedBuffers());
@@ -1992,6 +2009,7 @@ status_t ACodec::configureCodec(
             }
 
             int32_t push;
+			ALOGE("ACodec:PATCH:configureCodec[%s] 11", mComponentName.c_str());
             if (msg->findInt32("push-blank-buffers-on-shutdown", &push)
                     && push != 0) {
                 mFlags |= kFlagPushBlankBuffersToNativeWindowOnShutdown;
@@ -1999,6 +2017,7 @@ status_t ACodec::configureCodec(
         }
 
         int32_t rotationDegrees;
+		ALOGE("ACodec:PATCH:configureCodec[%s] 12", mComponentName.c_str());
         if (msg->findInt32("rotation-degrees", &rotationDegrees)) {
             mRotationDegrees = rotationDegrees;
         } else {
@@ -2007,6 +2026,7 @@ status_t ACodec::configureCodec(
     }
 
     if (video) {
+		ALOGE("ACodec:PATCH:configureCodec[%s] 13", mComponentName.c_str());
         // determine need for software renderer
         bool usingSwRenderer = false;
         if (haveNativeWindow && (mComponentName.startsWith("OMX.google.") ||
@@ -2016,28 +2036,35 @@ status_t ACodec::configureCodec(
         }
 
         if (encoder) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 14", mComponentName.c_str());
             err = setupVideoEncoder(mime, msg);
         } else {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 15", mComponentName.c_str());
             err = setupVideoDecoder(mime, msg, haveNativeWindow);
         }
 
         if (err != OK) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 16", mComponentName.c_str());
             return err;
         }
 
         if (haveNativeWindow) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 17", mComponentName.c_str());
             mNativeWindow = static_cast<Surface *>(obj.get());
         }
 
         // initialize native window now to get actual output format
         // TODO: this is needed for some encoders even though they don't use native window
         err = initNativeWindow();
+		ALOGE("ACodec:PATCH:configureCodec[%s] 18", mComponentName.c_str());
         if (err != OK) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 19", mComponentName.c_str());
             return err;
         }
 
         // fallback for devices that do not handle flex-YUV for native buffers
         if (haveNativeWindow) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 20", mComponentName.c_str());
             int32_t requestedColorFormat = OMX_COLOR_FormatUnused;
             if (msg->findInt32("color-format", &requestedColorFormat) &&
                     requestedColorFormat == OMX_COLOR_FormatYUV420Flexible) {
@@ -2085,6 +2112,7 @@ status_t ACodec::configureCodec(
         }
 
         if (usingSwRenderer) {
+			ALOGE("ACodec:PATCH:configureCodec[%s] 21", mComponentName.c_str());
             outputFormat->setInt32("using-sw-renderer", 1);
         }
     } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG)) {
@@ -2274,20 +2302,23 @@ status_t ACodec::configureCodec(
         err = setMinBufferSize(kPortIndexInput, 8192);  // XXX
     }
 
-    int32_t priority;
-    if (msg->findInt32("priority", &priority)) {
-        err = setPriority(priority);
-    }
+	ALOGE("ACodec:PATCH:configureCodec[%s] skip setPriority", mComponentName.c_str());
+	
+    //int32_t priority;
+    //if (msg->findInt32("priority", &priority)) {
+    //    err = setPriority(priority);
+    //}
 
-    int32_t rateInt = -1;
-    float rateFloat = -1;
-    if (!msg->findFloat("operating-rate", &rateFloat)) {
-        msg->findInt32("operating-rate", &rateInt);
-        rateFloat = (float)rateInt;  // 16MHz (FLINTMAX) is OK for upper bound.
-    }
-    if (rateFloat > 0) {
-        err = setOperatingRate(rateFloat, video);
-    }
+	ALOGE("ACodec:PATCH:configureCodec[%s] skip setOperatingRate", mComponentName.c_str());
+    //int32_t rateInt = -1;
+    //float rateFloat = -1;
+    //if (!msg->findFloat("operating-rate", &rateFloat)) {
+    //    msg->findInt32("operating-rate", &rateInt);
+    //    rateFloat = (float)rateInt;  // 16MHz (FLINTMAX) is OK for upper bound.
+    //}
+    //if (rateFloat > 0) {
+    //    err = setOperatingRate(rateFloat, video);
+    //}
 
     mBaseOutputFormat = outputFormat;
 
@@ -4143,16 +4174,23 @@ bool ACodec::isFlexibleColorFormat(
 }
 
 status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+	ALOGE("ACodec:PATCH:getPortFormat[%s]", mComponentName.c_str());
     const char *niceIndex = portIndex == kPortIndexInput ? "input" : "output";
     OMX_PARAM_PORTDEFINITIONTYPE def;
     InitOMXParams(&def);
     def.nPortIndex = portIndex;
 
+	ALOGE("ACodec:PATCH:getPortFormat[%s] getParameter(OMX_IndexParamPortDefinition)", mComponentName.c_str());
     status_t err = mOMX->getParameter(mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
     if (err != OK) {
+		ALOGE("ACodec:PATCH:getPortFormat[%s] getParameter(OMX_IndexParamPortDefinition) ERROR", mComponentName.c_str());
         return err;
     }
-
+	
+	ALOGE("ACodec:PATCH:getPortFormat[%s] Skip checking on encoder", mComponentName.c_str());
+    if (strncmp(mComponentName.c_str(), "OMX.brcm.video.h264.hw.encoder", 30) != 0)
+        // Skip checking on encoder. It will return the incorrect
+        // port index, but correct parameters.
     if (def.eDir != (portIndex == kPortIndexOutput ? OMX_DirOutput : OMX_DirInput)) {
         ALOGE("unexpected dir: %s(%d) on %s port", asString(def.eDir), def.eDir, niceIndex);
         return BAD_VALUE;
@@ -5874,8 +5912,10 @@ bool ACodec::LoadedState::onConfigureComponent(
     AString mime;
 
     if (!msg->findString("mime", &mime)) {
+		ALOGE("ACodec:PATCH:onConfigureComponent MIME BAD_VALUE");
         err = BAD_VALUE;
     } else {
+		ALOGE("ACodec:PATCH:onConfigureComponent configureCodec [%s]", mCodec->mComponentName.c_str());
         err = mCodec->configureCodec(mime.c_str(), msg);
     }
     if (err != OK) {
@@ -5943,6 +5983,7 @@ bool ACodec::LoadedState::onConfigureComponent(
             observer->setNotificationMessage(notify);
             mCodec->mComponentName = componentName;
 
+			ALOGE("ACodec:PATCH:onConfigureComponent configureCodec2 [%s]", mCodec->mComponentName.c_str());
             err = mCodec->configureCodec(mime.c_str(), msg);
         }
 
@@ -6595,14 +6636,15 @@ status_t ACodec::setParameters(const sp<AMessage> &params) {
         }
     }
 
-    float rate;
-    if (params->findFloat("operating-rate", &rate) && rate > 0) {
-        status_t err = setOperatingRate(rate, mIsVideo);
-        if (err != OK) {
-            ALOGE("Failed to set parameter 'operating-rate' (err %d)", err);
-            return err;
-        }
-    }
+	ALOGE("ACodec:PATCH:setParameters skip operating-rate");
+    //float rate;
+    //if (params->findFloat("operating-rate", &rate) && rate > 0) {
+    //    status_t err = setOperatingRate(rate, mIsVideo);
+    //    if (err != OK) {
+    //        ALOGE("Failed to set parameter 'operating-rate' (err %d)", err);
+    //        return err;
+    //    }
+    //}
 
     return OK;
 }
