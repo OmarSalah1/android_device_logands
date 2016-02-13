@@ -2202,6 +2202,7 @@ void MPEG4Writer::Track::updateDriftTime(const sp<MetaData>& meta) {
 }
 
 status_t MPEG4Writer::Track::threadEntry() {
+	ALOGE("MPEG4Writer:PATCH:threadEntry");
     int32_t count = 0;
     const int64_t interleaveDurationUs = mOwner->interleaveDuration();
     const bool hasMultipleTracks = (mOwner->numTracks() > 1);
@@ -2229,6 +2230,7 @@ status_t MPEG4Writer::Track::threadEntry() {
     }
 
     if (mOwner->isRealTimeRecording()) {
+		ALOGE("MPEG4Writer:PATCH:threadEntry ANDROID_PRIORITY_AUDIO");
         androidSetThreadPriority(0, ANDROID_PRIORITY_AUDIO);
     }
 
@@ -2356,6 +2358,7 @@ status_t MPEG4Writer::Track::threadEntry() {
 
         timestampUs -= previousPausedDurationUs;
         if (WARN_UNLESS(timestampUs >= 0ll, "for %s track", trackName)) {
+			ALOGE("MPEG4Writer:PATCH:threadEntry ERROR_MALFORMED 1");
             //copy->release();
             //return ERROR_MALFORMED;
         }
@@ -2372,6 +2375,7 @@ status_t MPEG4Writer::Track::threadEntry() {
             cttsOffsetTimeUs =
                     timestampUs - decodingTimeUs;
             if (WARN_UNLESS(kMaxCttsOffsetTimeUs >= decodingTimeUs - timestampUs, "for %s track", trackName)) {
+				ALOGE("MPEG4Writer:PATCH:threadEntry ERROR_MALFORMED 2");
                 //copy->release();
                 //return ERROR_MALFORMED;
             }
@@ -2384,7 +2388,8 @@ status_t MPEG4Writer::Track::threadEntry() {
             currCttsOffsetTimeTicks =
                     (cttsOffsetTimeUs * mTimeScale + 500000LL) / 1000000LL;
             if (WARN_UNLESS(currCttsOffsetTimeTicks <= 0x0FFFFFFFFLL, "for %s track", trackName)) {
-                //copy->release();
+                ALOGE("MPEG4Writer:PATCH:threadEntry ERROR_MALFORMED 3");
+				//copy->release();
                 //return ERROR_MALFORMED;
             }
 
@@ -2426,7 +2431,8 @@ status_t MPEG4Writer::Track::threadEntry() {
         }
 
         if (WARN_UNLESS(timestampUs >= 0ll, "for %s track", trackName)) {
-            //copy->release();
+            ALOGE("MPEG4Writer:PATCH:threadEntry ERROR_MALFORMED 4");
+			//copy->release();
             //return ERROR_MALFORMED;
         }
 
@@ -2447,6 +2453,7 @@ status_t MPEG4Writer::Track::threadEntry() {
         if (currDurationTicks < 0ll) {
             ALOGE("timestampUs %" PRId64 " < lastTimestampUs %" PRId64 " for %s track",
                 timestampUs, lastTimestampUs, trackName);
+			ALOGE("MPEG4Writer:PATCH:threadEntry ERROR_MALFORMED 5");	
             //copy->release();
             //return UNKNOWN_ERROR;
         }
@@ -2546,6 +2553,7 @@ status_t MPEG4Writer::Track::threadEntry() {
     }
 
     if (isTrackMalFormed()) {
+		ALOGE("MPEG4Writer:PATCH:threadEntry ERROR_MALFORMED 6");
         //err = ERROR_MALFORMED;
     }
 

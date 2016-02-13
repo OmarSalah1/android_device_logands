@@ -937,15 +937,22 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
 #endif
 
 	ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] def.format.video.eColorFormat(%i)", mComponentName.c_str(), def.format.video.eColorFormat);
+	OMX_COLOR_FORMATTYPE HalColorFormat;
 	switch (def.format.video.eColorFormat) {
-		default:
-			def.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
-			status_t cl = mOMX->setParameter(mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
+		case OMX_COLOR_FormatYCbYCr:{
+			//def.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
+			//status_t clp = mOMX->setParameter(mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
+			HalColorFormat = (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YV12;
 			ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] def.format.video.eColorFormat NOW (%i)", mComponentName.c_str(), def.format.video.eColorFormat);
-			if (cl != OK) {
-				ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] setParameter(OMX_IndexParamPortDefinition) ERROR", mComponentName.c_str());
-			}
-		break;	
+			//if (clp != OK) {
+			//	ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] setParameter(OMX_IndexParamPortDefinition) ERROR", mComponentName.c_str());
+			//}
+		}	
+		break;
+		default:
+			ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] def.format.video.eColorFormat Default (%i)", mComponentName.c_str(), def.format.video.eColorFormat);
+			HalColorFormat = def.format.video.eColorFormat;
+		break;
 	}
 
     ALOGV("gralloc usage: %#x(OMX) => %#x(ACodec)", omxUsage, usage);
@@ -956,7 +963,7 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
 #ifdef USE_SAMSUNG_COLORFORMAT
             eNativeColorFormat,
 #else
-            def.format.video.eColorFormat,
+            HalColorFormat,
 #endif
             mRotationDegrees,
             usage);
@@ -2856,6 +2863,7 @@ status_t ACodec::setVideoPortFormatType(
         OMX_VIDEO_CODINGTYPE compressionFormat,
         OMX_COLOR_FORMATTYPE colorFormat,
         bool usingNativeBuffers) {
+	ALOGE("ACodec:PATCH:setVideoPortFormatType[%s]", mComponentName.c_str());		
     OMX_VIDEO_PARAM_PORTFORMATTYPE format;
     InitOMXParams(&format);
     format.nPortIndex = portIndex;
@@ -2865,11 +2873,13 @@ status_t ACodec::setVideoPortFormatType(
     OMX_U32 index = 0;
     for (;;) {
         format.nIndex = index;
+		ALOGE("ACodec:PATCH:setVideoPortFormatType[%s] getParameter(OMX_IndexParamVideoPortFormat)", mComponentName.c_str());
         status_t err = mOMX->getParameter(
                 mNode, OMX_IndexParamVideoPortFormat,
                 &format, sizeof(format));
 
         if (err != OK) {
+			ALOGE("ACodec:PATCH:setVideoPortFormatType[%s] getParameter(OMX_IndexParamVideoPortFormat) ERROR", mComponentName.c_str());
             return err;
         }
 
@@ -2879,7 +2889,7 @@ status_t ACodec::setVideoPortFormatType(
                 && isFlexibleColorFormat(
                         mOMX, mNode, format.eColorFormat, usingNativeBuffers, &flexibleEquivalent)
                 && colorFormat == flexibleEquivalent) {
-            ALOGI("[%s] using color format %#x in place of %#x",
+            ALOGE("[%s] using color format %#x in place of %#x",
                     mComponentName.c_str(), format.eColorFormat, colorFormat);
             colorFormat = format.eColorFormat;
         }
@@ -2912,6 +2922,7 @@ status_t ACodec::setVideoPortFormatType(
     }
 
     if (!found) {
+		ALOGE("ACodec:PATCH:setVideoPortFormatType[%s] UNKNOWN_ERROR", mComponentName.c_str());
         return UNKNOWN_ERROR;
     }
 
@@ -2937,6 +2948,7 @@ status_t ACodec::setVideoPortFormatType(
 // For legacy support, we prefer a standard format, but will settle for a SW readable
 // flex-YUV format.
 status_t ACodec::setSupportedOutputFormat(bool getLegacyFlexibleFormat) {
+	ALOGE("ACodec:PATCH:setSupportedOutputFormat[%s]", mComponentName.c_str());
     OMX_VIDEO_PARAM_PORTFORMATTYPE format, legacyFormat;
     InitOMXParams(&format);
     format.nPortIndex = kPortIndexOutput;
@@ -2947,10 +2959,12 @@ status_t ACodec::setSupportedOutputFormat(bool getLegacyFlexibleFormat) {
 
     for (OMX_U32 index = 0; ; ++index) {
         format.nIndex = index;
+		ALOGE("ACodec:PATCH:setSupportedOutputFormat[%s] getParameter(OMX_IndexParamVideoPortFormat)", mComponentName.c_str());
         status_t err = mOMX->getParameter(
                 mNode, OMX_IndexParamVideoPortFormat,
                 &format, sizeof(format));
         if (err != OK) {
+			ALOGE("ACodec:PATCH:setSupportedOutputFormat[%s] getParameter(OMX_IndexParamVideoPortFormat) ERROR", mComponentName.c_str());
             // no more formats, pick legacy format if found
             if (legacyFormat.eColorFormat != OMX_COLOR_FormatUnused) {
                  memcpy(&format, &legacyFormat, sizeof(format));
@@ -2982,6 +2996,7 @@ status_t ACodec::setSupportedOutputFormat(bool getLegacyFlexibleFormat) {
             memcpy(&legacyFormat, &format, sizeof(format));
         }
     }
+	ALOGE("ACodec:PATCH:setSupportedOutputFormat[%s] setParameter(OMX_IndexParamVideoPortFormat)", mComponentName.c_str());
     return mOMX->setParameter(
             mNode, OMX_IndexParamVideoPortFormat,
             &format, sizeof(format));
@@ -3035,6 +3050,7 @@ static status_t GetMimeTypeForVideoCoding(
 
 status_t ACodec::setupVideoDecoder(
         const char *mime, const sp<AMessage> &msg, bool haveNativeWindow) {
+	ALOGE("ACodec:PATCH:setupVideoDecoder[%s]", mComponentName.c_str());		
     int32_t width, height;
     if (!msg->findInt32("width", &width)
             || !msg->findInt32("height", &height)) {
@@ -3062,11 +3078,15 @@ status_t ACodec::setupVideoDecoder(
     if (msg->findInt32("color-format", &tmp)) {
         OMX_COLOR_FORMATTYPE colorFormat =
             static_cast<OMX_COLOR_FORMATTYPE>(tmp);
+			
+		ALOGE("ACodec:PATCH:setupVideoDecoder[%s] colorFormat = %i", mComponentName.c_str(), colorFormat);
+		
         err = setVideoPortFormatType(
                 kPortIndexOutput, OMX_VIDEO_CodingUnused, colorFormat, haveNativeWindow);
         if (err != OK) {
             ALOGW("[%s] does not support color format %d",
                   mComponentName.c_str(), colorFormat);
+			ALOGE("ACodec:PATCH:setupVideoDecoder[%s] setSupportedOutputFormat", mComponentName.c_str());	  
             err = setSupportedOutputFormat(!haveNativeWindow /* getLegacyFlexibleFormat */);
         }
     } else {
@@ -3104,6 +3124,7 @@ status_t ACodec::setupVideoDecoder(
 }
 
 status_t ACodec::setupVideoEncoder(const char *mime, const sp<AMessage> &msg) {
+	ALOGE("ACodec:PATCH:setupVideoEncoder");
     int32_t tmp;
     if (!msg->findInt32("color-format", &tmp)) {
         return INVALID_OPERATION;
@@ -3111,6 +3132,8 @@ status_t ACodec::setupVideoEncoder(const char *mime, const sp<AMessage> &msg) {
 
     OMX_COLOR_FORMATTYPE colorFormat =
         static_cast<OMX_COLOR_FORMATTYPE>(tmp);
+		
+	ALOGE("ACodec:PATCH:setupVideoEncoder colorFormat = %i", colorFormat);	
 
     status_t err = setVideoPortFormatType(
             kPortIndexInput, OMX_VIDEO_CodingUnused, colorFormat);
@@ -3268,7 +3291,7 @@ status_t ACodec::setupVideoEncoder(const char *mime, const sp<AMessage> &msg) {
     }
 
     if (err == OK) {
-        ALOGI("setupVideoEncoder succeeded");
+        ALOGE("setupVideoEncoder succeeded");
     }
 
     return err;
@@ -3870,15 +3893,18 @@ status_t ACodec::setVideoFormatOnPort(
         OMX_U32 portIndex,
         int32_t width, int32_t height, OMX_VIDEO_CODINGTYPE compressionFormat,
         float frameRate) {
+	ALOGE("ACodec:PATCH:setVideoFormatOnPort");		
     OMX_PARAM_PORTDEFINITIONTYPE def;
     InitOMXParams(&def);
     def.nPortIndex = portIndex;
 
     OMX_VIDEO_PORTDEFINITIONTYPE *video_def = &def.format.video;
 
+	ALOGE("ACodec:PATCH:setVideoFormatOnPort getParameter(OMX_IndexParamPortDefinition)");	
     status_t err = mOMX->getParameter(
             mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
     if (err != OK) {
+		ALOGE("ACodec:PATCH:setVideoFormatOnPort getParameter(OMX_IndexParamPortDefinition) ERROR");
         return err;
     }
 
@@ -3906,6 +3932,7 @@ status_t ACodec::setVideoFormatOnPort(
         }
     }
 
+	ALOGE("ACodec:PATCH:setVideoFormatOnPort setParameter(OMX_IndexParamPortDefinition)");
     err = mOMX->setParameter(
             mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
 
@@ -4001,6 +4028,7 @@ void ACodec::processDeferredMessages() {
 
 // static
 bool ACodec::describeDefaultColorFormat(DescribeColorFormatParams &params) {
+	ALOGE("ACodec:PATCH:describeDefaultColorFormat");
     MediaImage &image = params.sMediaImage;
     memset(&image, 0, sizeof(image));
 
@@ -4008,6 +4036,9 @@ bool ACodec::describeDefaultColorFormat(DescribeColorFormatParams &params) {
     image.mNumPlanes = 0;
 
     const OMX_COLOR_FORMATTYPE fmt = params.eColorFormat;
+	
+	ALOGE("ACodec:PATCH:describeDefaultColorFormat eColorFormat = %i", params.eColorFormat);
+	
     image.mWidth = params.nFrameWidth;
     image.mHeight = params.nFrameHeight;
 
@@ -4117,6 +4148,7 @@ bool ACodec::describeColorFormat(
         const sp<IOMX> &omx, IOMX::node_id node,
         DescribeColorFormatParams &describeParams)
 {
+	ALOGE("ACodec:PATCH:describeColorFormat");
     OMX_INDEXTYPE describeColorFormatIndex;
     if (omx->getExtensionIndex(
             node, "OMX.google.android.index.describeColorFormat",
@@ -4126,6 +4158,7 @@ bool ACodec::describeColorFormat(
             &describeParams, sizeof(describeParams)) != OK) {
         return describeDefaultColorFormat(describeParams);
     }
+	ALOGE("ACodec:PATCH:describeColorFormat MediaImage::MEDIA_IMAGE_TYPE_UNKNOWN");
     return describeParams.sMediaImage.mType !=
             MediaImage::MEDIA_IMAGE_TYPE_UNKNOWN;
 }
