@@ -4220,10 +4220,6 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
         return err;
     }
 	
-	ALOGE("ACodec:PATCH:getPortFormat[%s] Skip checking on encoder", mComponentName.c_str());
-    if (strncmp(mComponentName.c_str(), "OMX.brcm.video.h264.hw.encoder", 30) != 0)
-        // Skip checking on encoder. It will return the incorrect
-        // port index, but correct parameters.
     if (def.eDir != (portIndex == kPortIndexOutput ? OMX_DirOutput : OMX_DirInput)) {
         ALOGE("unexpected dir: %s(%d) on %s port", asString(def.eDir), def.eDir, niceIndex);
         return BAD_VALUE;
