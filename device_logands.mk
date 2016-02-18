@@ -36,7 +36,7 @@ PRODUCT_COPY_FILES += \
 
 # Copy Apps
 #PRODUCT_COPY_FILES += \
-#   device/samsung/baffinlite/MultiSIM-Toggle.apk:system/app/MultiSIM-Toggle.apk
+#       device/samsung/baffinlite/MultiSIM-Toggle.apk:system/app/MultiSIM-Toggle.apk
 
 # Charger
 PRODUCT_PACKAGES += \
@@ -50,46 +50,46 @@ ADDITIONAL_DEFAULT_PROPERTIES += \
 	
 # Filesystem management tools
 PRODUCT_PACKAGES += \
-    make_ext4fs \
-    e2fsck \
-    setup_fs
+        make_ext4fs \
+        e2fsck \
+        setup_fs
     
 # IPv6 tethering
 PRODUCT_PACKAGES += \
-    ebtables \
-    ethertypes
+        ebtables \
+        ethertypes
    
 # Open-source lights HAL
 PRODUCT_PACKAGES += \
-    lights.hawaii
+        lights.hawaii
 		
 # Misc other modules
 PRODUCT_PACKAGES += \
-    audio.a2dp.default \
-    audio.usb.default \
-    audio.r_submix.default \
-    audio.primary.default
+        audio.a2dp.default \
+        audio.usb.default \
+        audio.r_submix.default \
+        audio.primary.default
 
 # KSM
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.ksm.default=1
+        ro.ksm.default=1
 	
 # Use 3 threads for Dex2Oat.
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.sys.fw.dex2oat_thread_count=3
+        ro.sys.fw.dex2oat_thread_count=3
 
 # ART
 PRODUCT_PROPERTY_OVERRIDES += \
-    dalvik.vm.dex2oat-flags=--no-watch-dog	
+        dalvik.vm.dex2oat-flags=--no-watch-dog	
 	
 # Wi-Fi
 PRODUCT_PACKAGES += \
-    macloader \
-    dhcpcd.conf \
-    hostapd \
-    libnetcmdiface \
-    wpa_supplicant \
-    wpa_supplicant.conf
+        macloader \
+        dhcpcd.conf \
+        hostapd \
+        libnetcmdiface \
+        wpa_supplicant \
+        wpa_supplicant.conf
 	
 # GPS/RIL
 PRODUCT_PACKAGES += \
@@ -126,14 +126,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
 	mobiledata.interfaces=rmnet0 \
 	ro.telephony.ril_class=SamsungBCMRIL \
 	persist.radio.multisim.config=dsds \
-	cm.updater.uri=http://ota.androiddev.pp.ua \
+	cm.updater.uri=http://updates.cm-ota.pp.ua \
 	ro.telephony.call_ring.multiple=0 \
 	camera2.portability.force_api=1 \
 	ro.telephony.call_ring=0
 	
 # MTP
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    persist.sys.usb.config=mtp
+        persist.sys.usb.config=mtp
 	
 # Dalvik heap config
 include frameworks/native/build/phone-hdpi-512-dalvik-heap.mk
