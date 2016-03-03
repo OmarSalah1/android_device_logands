@@ -1,7 +1,7 @@
 USE_CAMERA_STUB := true
 
 # inherit from the proprietary version
--include vendor/samsung/logands/BoardConfigVendor.mk
+-include vendor/samsung/loganxx/BoardConfigVendor.mk
 
 # Platform
 TARGET_ARCH := arm
