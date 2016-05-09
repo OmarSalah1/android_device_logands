@@ -69,6 +69,10 @@ PRODUCT_PACKAGES += \
         audio.usb.default \
         audio.r_submix.default \
         audio.primary.default
+		
+# Gello
+PRODUCT_PACKAGES += \
+    Gello 		
 
 # KSM
 PRODUCT_PROPERTY_OVERRIDES += \
