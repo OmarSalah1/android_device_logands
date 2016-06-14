@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(TARGET_DEVICE),logands)
-ifeq ($(TARGET_BOARD_PLATFORM),hawaii)
-
 LOCAL_PATH := $(call my-dir)
 
 # HAL module implementation, not prelinked and stored in
@@ -33,6 +30,3 @@ LOCAL_MODULE := lights.hawaii
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
-
-endif
-endif
