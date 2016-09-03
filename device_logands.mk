@@ -36,7 +36,8 @@ PRODUCT_COPY_FILES += \
 
 # Charger
 PRODUCT_PACKAGES += \
-	charger_res_images
+    charger_res_images \
+    cm_charger_res_images
 
 # Insecure ADBD
 ADDITIONAL_DEFAULT_PROPERTIES += \
